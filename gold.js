@@ -1,8 +1,10 @@
 const { exec } = require("child_process");
 const dialog = require("dialog");
 const _ = require("lodash");
-const inputPrice = 450.19;
-const goldWeight = 265.9428;
+const MONEY = 120000;
+const inputPrice = 447.39;
+const goldWeight = 491.7463;
+const serviceRate = 0.003;
 // 定义要发送的Curl命令
 const curlCommand = `
 curl 'https://ms.jr.jd.com/gw/generic/hj/h5/m/latestPrice?reqData=%7B%7D' \
@@ -26,7 +28,13 @@ curl 'https://ms.jr.jd.com/gw/generic/hj/h5/m/latestPrice?reqData=%7B%7D' \
   -H 'sec-ch-ua-platform: "macOS"' \
   --compressed
 `;
-
+/** 涨到多少才能赚，减去手续费 */
+function getWinPriceLargeThanServiceFee(lowPrice) {
+  const result = lowPrice / (1 / serviceRate - 1);
+  // const serviceFee = (inputPrice + result) * goldWeight * serviceRate;
+  // const win = (inputPrice + result) * goldWeight - inputPrice * goldWeight;
+  return result;
+}
 function pad0(num) {
   return String(num).padStart(2, "0");
 }
@@ -47,13 +55,9 @@ function formatTime(timestamp) {
   const seconds = pad0(date.getSeconds());
 
   // 构建可读的日期和时间字符串
-  const formattedDate = `${year}-${month}-${day}`;
   const formattedTime = `${hours}:${minutes}:${seconds}`;
 
   // 打印结果
-  //   console.log("Date:", formattedDate);
-  //   console.log("Time:", formattedTime);
-  // return formattedDate + " " + formattedTime;
   return formattedTime;
 }
 
@@ -65,30 +69,30 @@ function sendRequest() {
       clearInterval(timer);
       return;
     }
-    // if (stderr) {
-    //   console.error("Error: stderr", stderr);
-    //   //   return;
-    // }
-    // console.log("Response:", stdout);
-    // console.log(
-    //   "🚀 xma 🚀 ~ file: gold.js:42 ~ JSON.parse(stdout):",
-    //   JSON.parse(stdout)
-    // );
 
     const {
       resultData: {
-        datas: { price, time },
+        datas: { price: _price, time },
       },
     } = JSON.parse(stdout);
-
+    const price = Number(_price);
     const currentPrice = formatPrice(price);
     const date = formatTime(time);
-    const rest = formatPrice(price - inputPrice);
-    const serviceFee = formatPrice(price * goldWeight * 0.003);
+    const rest = inputPrice ? formatPrice(price - inputPrice) : 0;
+    const serviceFee = formatPrice(price * goldWeight * serviceRate);
     const win = formatPrice(rest * goldWeight - serviceFee);
-    console.log(`${date} | ${currentPrice} | ${win} | ${rest}`);
 
-    if (rest > 2.5 || rest < -3) {
+    const minPrice = formatPrice(
+      inputPrice + getWinPriceLargeThanServiceFee(inputPrice)
+    );
+
+    const currentMinPrice = formatPrice(
+      price + getWinPriceLargeThanServiceFee(price)
+    );
+
+    console.log(`${date} | ${currentPrice} | ${win} | ${rest} | ${minPrice}`);
+
+    if (rest > 3.5 || rest < -3) {
       showDialog(price);
     }
   });
