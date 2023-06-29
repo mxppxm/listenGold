@@ -2,8 +2,8 @@ const { exec } = require("child_process");
 const dialog = require("dialog");
 const _ = require("lodash");
 const MONEY = 120000;
-const inputPrice = 447.39;
-const goldWeight = 491.7463;
+const inputPrice = 447.04;
+const goldWeight = 265.8314;
 const serviceRate = 0.003;
 // 定义要发送的Curl命令
 const curlCommand = `
