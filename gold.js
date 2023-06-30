@@ -3,7 +3,7 @@ const dialog = require("dialog");
 const _ = require("lodash");
 const MONEY = 120000;
 const inputPrice = 447.04;
-const goldWeight = 265.8314;
+const goldWeight = 99;
 const serviceRate = 0.003;
 // 定义要发送的Curl命令
 const curlCommand = `
